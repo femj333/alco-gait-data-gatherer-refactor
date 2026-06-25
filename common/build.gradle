@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 
 android {
+    namespace 'edu.wpi.alcogaitdatagatherer.common'
     compileSdkVersion 26
     buildToolsVersion "26.0.2"
 

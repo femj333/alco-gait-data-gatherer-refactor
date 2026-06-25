@@ -1,6 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
+    namespace 'edu.wpi.alcogaitdatagatherer.wear'
     compileSdkVersion 26
     defaultConfig {
         applicationId "edu.wpi.alcogaitdatagatherer"
