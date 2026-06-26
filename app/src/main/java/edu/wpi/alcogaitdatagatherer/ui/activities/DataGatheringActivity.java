@@ -1,8 +1,6 @@
 package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.Manifest;
-import android.app.AlertDialog;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -17,16 +15,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Vibrator;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatTextView;
-import android.support.v7.widget.Toolbar;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,6 +25,16 @@ import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatTextView;
+import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.FragmentManager;
+import androidx.preference.PreferenceManager;
 
 import com.google.android.gms.tasks.Tasks;
 import com.google.android.gms.wearable.CapabilityClient;
@@ -57,8 +55,8 @@ import edu.wpi.alcogaitdatagatherer.R;
 import edu.wpi.alcogaitdatagatherer.models.SensorRecorder;
 import edu.wpi.alcogaitdatagatherer.models.TestSubject;
 import edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment;
-import edu.wpi.alcogaitdatagatherercommon.CommonCode;
-import edu.wpi.alcogaitdatagatherercommon.WalkType;
+import edu.wpi.alcogaitdatagatherer.common.CommonCode;
+import edu.wpi.alcogaitdatagatherer.common.WalkType;
 import it.sephiroth.android.library.tooltip.Tooltip;
 
 import static android.view.View.LAYER_TYPE_HARDWARE;
@@ -100,7 +98,9 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         Toolbar toolbar = findViewById(R.id.survey_toolbar);
         toolbar.setTitle("Record Gait Data");
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        }
 
         Intent prevIntent = getIntent();
         testSubject= (TestSubject) prevIntent.getSerializableExtra("test_subject");
@@ -117,9 +117,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     private void initViews(){
-        //TextView title = (TextView) findViewById(R.id.title);
-        //TextView text = (TextView) findViewById(R.id.summary);
-
         countdownTextField = findViewById(R.id.countdown);
         countdownTextField.setText(Integer.toString(CommonCode.RECORD_TIME_IN_SECONDS));
         countdown_title = findViewById(R.id.countdown_title);
@@ -130,36 +127,37 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         restartButton = findViewById(R.id.restartButton);
         reDoWalkButton = findViewById(R.id.redoWalkButton);
         finishButton = findViewById(R.id.finishButton);
-        finishButton = findViewById(R.id.finishButton);
         walkLogDisplay = findViewById(R.id.walkLogDisplay);
-        walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
+        if (walkLogDisplay != null) {
+            walkLogDisplay.setMovementMethod(new ScrollingMovementMethod());
+        }
         progressBarHolder = findViewById(R.id.progressBarHolder);
         bottomBarLayout = findViewById(R.id.bottomBar);
         wearConnectProgressUpdateTextView = findViewById(R.id.wearConnectProgressUpdateTextView);
         disableBar(true);
 
-        bacInput.addTextChangedListener(new TextWatcher() {
+        bacInput.addTextChangedListener(new android.text.TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void afterTextChanged(Editable editable) {
+            public void afterTextChanged(android.text.Editable editable) {
                 String bacString = editable.toString().trim();
                 if (!bacString.isEmpty()) {
                     if (bacString.startsWith(".")) {
                         bacString = "0" + bacString;
                     }
-                    if (Double.parseDouble(bacString) > 5.0) {
-                        bacInput.setError("Invalid. 5.0 Maximum");
-                    } else {
-                        bacInput.setError(null);
+                    try {
+                        if (Double.parseDouble(bacString) > 5.0) {
+                            bacInput.setError("Invalid. 5.0 Maximum");
+                        } else {
+                            bacInput.setError(null);
+                        }
+                    } catch (NumberFormatException e) {
+                        bacInput.setError("Invalid number");
                     }
                 }
             }
@@ -205,10 +203,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
                         WalkReportFragment walkReportFragment = new WalkReportFragment();
-                        Bundle bundle = walkReportFragment.getArguments();
-                        if (bundle == null) {
-                            bundle = new Bundle();
-                        }
+                        Bundle bundle = new Bundle();
                         bundle.putSerializable(TB_FOR_WALK_REPORT, sensorRecorder.getTestSubject());
                         walkReportFragment.setArguments(bundle);
                         setFragment(walkReportFragment);
@@ -243,7 +238,7 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     private void prepareStoragePath() {
-        String baseDir = android.os.Environment.getExternalStorageDirectory().getAbsolutePath() + "/AlcoGaitDataGatherer/";
+        String baseDir = getExternalFilesDir(null).getAbsolutePath() + "/AlcoGaitDataGatherer/";
         String folderName = "ID_" + testSubject.getSubjectID().trim();
         mFolderName = baseDir + folderName;
         File surveyStorageDirectory = new File(mFolderName);
@@ -317,7 +312,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 }
                 notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.STOP_RECORDING);
                 startProgressBar();
-                //isReceivingFromWatch = true;
             }
 
             countdown_title.setVisibility(View.GONE);
@@ -325,10 +319,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
             setupTimer();
             stopButton.setVisibility(View.GONE);
 
-            // TODO WAIT FOR WATCH AFTER EACH WALK
-            /*if (!isWearablePreferenceEnabled()) {
-                resetRecordViews(sensorRecorder.stopRecording());
-            }*/
             resetRecordViews(sensorRecorder.stopRecording());
         }
     }
@@ -368,12 +358,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         super.onPause();
     }
 
-    /**
-     * Creates tooltips on the screen to guide the user through the application.
-     * @param view View that the tooltip will be attached (pointing towards to).
-     * @param gravity Specifies the position the tooltip will be placed relative to the attached view.
-     * @param text The text that will be siplayed as a message on the tooltip.
-     */
     public void createToolTip(View view, Tooltip.Gravity gravity, String text){
         Tooltip.make(this,
                 new Tooltip.Builder(101)
@@ -471,43 +455,15 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                         break;
                 }
             } else if (messageEvent.getPath().equalsIgnoreCase(CommonCode.STOP_RECORDING_PATH)) {
-                totalSampleSizeInWearable = Integer.valueOf(new String(messageEvent.getData()));
+                try {
+                    totalSampleSizeInWearable = Integer.valueOf(new String(messageEvent.getData()));
+                } catch (NumberFormatException e) {
+                    totalSampleSizeInWearable = 0;
+                }
                 stopRecording();
             }
         });
     }
-
-    /*@Override
-    public void onDataChanged(@NonNull DataEventBuffer dataEvents) {
-        if(sensorRecorder!= null && sensorRecorder.isRecording()){
-            for (DataEvent dataEvent : dataEvents) {
-                if (dataEvent.getType() == DataEvent.TYPE_CHANGED) {
-                    DataItem dataItem = dataEvent.getDataItem();
-                    Uri uri = dataItem.getUri();
-                    String path = uri.getPath();
-
-                    if (path.startsWith(CommonCode.SENSOR_PATH)) {
-                        if (DataMapItem.fromDataItem(dataItem).getDataMap().getString(CommonCode.SENSOR_NAME).equals(CommonCode.TRANSFER_FINISHED_STRING) &&
-                                DataMapItem.fromDataItem(dataItem).getDataMap().getLong(CommonCode.TIMESTAMP) == CommonCode.TRANSFER_FINISHED_LONG) {
-                            stopWaitingForWatch();
-                            return;
-                        }
-                        sensorRecorder.addWearableSensorData(
-                                Integer.parseInt(uri.getLastPathSegment()),
-                                DataMapItem.fromDataItem(dataItem).getDataMap()
-                        );
-                        samplesReceivedFromWatch++;
-                        if (totalSampleSizeInWearable != 0) {
-                            String status = String.valueOf(samplesReceivedFromWatch) + "/" + String.valueOf(totalSampleSizeInWearable);
-                            wearConnectProgressUpdateTextView.setText(String.format("%s\n%s", getString(R.string.collecting_from_watch), status));
-                        } else {
-                            wearConnectProgressUpdateTextView.setText(getString(R.string.collecting_from_watch));
-                        }
-                    }
-                }
-            }
-        }
-    }*/
 
     public void startProgressBar() {
         AlphaAnimation inAnimation = new AlphaAnimation(0f, 1f);
@@ -546,21 +502,20 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
     }
 
     protected void setFragment(WalkReportFragment fragment) {
-        FragmentManager manager = getFragmentManager();
+        FragmentManager manager = getSupportFragmentManager();
         fragment.show(manager, "FRAGMENT");
     }
 
     private void saveCurrentWalkNumber() {
         sensorRecorder.saveCurrentWalkNumberToCSV(bacInput);
-        //createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String permissions[], @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case READ_WRITE_PERMISSION_CODE : {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     saveCurrentWalkNumber();
@@ -575,11 +530,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
         }
         allowBACInput = allowInput;
         startButton.setVisibility(View.VISIBLE);
-        // temporarily disallow changing BAC in the same walk number
-        /*if (allowInput) {
-            bacInput.setEnabled(true);
-            createToolTip(bacInput, Tooltip.Gravity.RIGHT, "Update BAC for next walk");
-        }*/
         disableBar(false);
     }
 
@@ -656,7 +606,6 @@ public class DataGatheringActivity extends AppCompatActivity implements MessageC
                 if (isWearablePreferenceEnabled()) {
                     notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.REFRESH_CONNECTION);
                     new CheckWearableReachability().execute();
-                    //stopWaitingForWatch();
                     return true;
                 }
                 return false;

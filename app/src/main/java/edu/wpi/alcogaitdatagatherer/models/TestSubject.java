@@ -2,7 +2,7 @@ package edu.wpi.alcogaitdatagatherer.models;
 
 import android.app.Dialog;
 import android.content.Context;
-import android.support.v7.widget.AppCompatTextView;
+import androidx.appcompat.widget.AppCompatTextView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 

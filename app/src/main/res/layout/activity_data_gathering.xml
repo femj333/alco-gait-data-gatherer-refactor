@@ -7,13 +7,13 @@
     android:keepScreenOn="true"
     tools:context="edu.wpi.alcogaitdatagatherer.ui.activities.DataGatheringActivity">
 
-    <android.support.design.widget.AppBarLayout
+    <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/toolbarParent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:theme="@style/AppTheme.AppBarOverlay">
 
-        <android.support.v7.widget.Toolbar
+        <androidx.appcompat.widget.Toolbar
             android:id="@+id/survey_toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
@@ -22,7 +22,7 @@
             android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
-    </android.support.design.widget.AppBarLayout>
+    </com.google.android.material.appbar.AppBarLayout>
 
     <ScrollView
         android:layout_width="match_parent"
@@ -141,7 +141,7 @@
             android:id="@+id/bottomBar"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content">
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/restartButton"
                 style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
@@ -151,7 +151,7 @@
                 android:clickable="false"
                 />
 
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/redoWalkButton"
                 style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"
@@ -161,7 +161,7 @@
                 android:clickable="false"
                 />
 
-            <android.support.v7.widget.AppCompatTextView
+            <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/finishButton"
                 style="@style/AppCompatBarStyle"
                 android:layout_width="wrap_content"

@@ -14,10 +14,10 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Vibrator;
-import android.support.annotation.NonNull;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.wearable.activity.WearableActivity;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.wear.ambient.AmbientModeSupport;
 import android.view.View;
 import android.view.animation.AlphaAnimation;
 import android.widget.FrameLayout;
@@ -50,7 +50,7 @@ import edu.wpi.alcogaitdatagatherer.tasks.LiteWalkToCSVTask;
 import edu.wpi.alcogaitdatagatherercommon.CommonCode;
 import edu.wpi.alcogaitdatagatherercommon.WalkType;
 
-public class WearHomeActivity extends WearableActivity implements MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener, SensorEventListener {
+public class WearHomeActivity extends androidx.fragment.app.FragmentActivity implements AmbientModeSupport.AmbientCallbackProvider, MessageClient.OnMessageReceivedListener, CapabilityClient.OnCapabilityChangedListener, SensorEventListener {
 
     private TextView instructionTextView;
     private TextView countdownTextView;
@@ -78,12 +78,13 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     private LiteWalk heelToToeWalk;
     private LiteWalk oneFootWalk;
     private LiteWalk nystagmusWalk;
+    private AmbientModeSupport.AmbientController mAmbientController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_wear_home);
-        setAmbientEnabled();
+        mAmbientController = AmbientModeSupport.attach(this);
 
         requestPermissions();
 
@@ -178,8 +179,6 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
         if (isRecording) {
             storeSensorData(sensorEvent.sensor.getType(), CommonCode.generatePrintableSensorData(sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp));
             recordedSamples++;
-            //walkHolderLite.addSensorData(currentWalkType, generatePrintableSensorData(sensorEvent.sensor.getName(),sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp, sensorEvent.sensor.getType()));
-            //sendSensorData(sensorEvent.sensor.getType(), sensorEvent.sensor.getName(), sensorEvent.values, sensorEvent.accuracy, sensorEvent.timestamp);
         }
     }
 
@@ -205,32 +204,6 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
                 return normalWalk;
         }
     }
-
-    /*public void sendSensorData(final int sensorType, final String sensorName, final float[] values, final int accuracy, final long timestamp) {
-        Thread sendingThread = new Thread(() -> {
-            PutDataMapRequest dataMap = PutDataMapRequest.create(CommonCode.SENSOR_PATH + String.valueOf(sensorType));
-
-            dataMap.getDataMap().putString(CommonCode.SENSOR_NAME, sensorName);
-            dataMap.getDataMap().putFloatArray(CommonCode.VALUES, values);
-            dataMap.getDataMap().putInt(CommonCode.ACCURACY, accuracy);
-            dataMap.getDataMap().putLong(CommonCode.TIMESTAMP, timestamp);
-            //dataMap.getDataMap().putString(CommonCode.WALK_TYPE_INFO, currentWalkType);
-
-            PutDataRequest putDataRequest = dataMap.asPutDataRequest();
-
-            Wearable.getDataClient(WearHomeActivity.this).putDataItem(putDataRequest).addOnSuccessListener(dataItem -> {
-                Log.v("WearHomeActivty", "Sent sensor data.");
-                if (timestamp == CommonCode.TRANSFER_FINISHED_LONG && sensorName.equals(CommonCode.TRANSFER_FINISHED_STRING)) {
-                    stopProgressBar();
-                    executorService.shutdown();
-                } else {
-                    recordedSamples++;
-                }
-            });
-        });
-
-        executorService.submit(sendingThread);
-    }*/
 
     private void setCurrentWalkType(String walkTypeStringNoSpace) {
         for (WalkType walkType : WalkType.values()) {
@@ -258,8 +231,6 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     private void stopRecording(){
         if(isRecording) {
             isRecording = false;
-            //startProgressBar();
-            //sendSensorData(12456345, CommonCode.TRANSFER_FINISHED_STRING, new float[1], noti_counter++, CommonCode.TRANSFER_FINISHED_LONG);
             notifyPhone(CommonCode.STOP_RECORDING_PATH, String.valueOf(recordedSamples));
             unregisterSensorListeners();
             instructionTextView.setText(R.string.use_phone_instruction);
@@ -400,21 +371,28 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
     }
 
     @Override
-    public void onEnterAmbient(Bundle ambientDetails) {
-        super.onEnterAmbient(ambientDetails);
-        updateDisplay();
+    public AmbientModeSupport.AmbientCallback getAmbientCallback() {
+        return new MyAmbientCallback();
     }
 
-    @Override
-    public void onUpdateAmbient() {
-        super.onUpdateAmbient();
-        updateDisplay();
-    }
+    private class MyAmbientCallback extends AmbientModeSupport.AmbientCallback {
+        @Override
+        public void onEnterAmbient(Bundle ambientDetails) {
+            super.onEnterAmbient(ambientDetails);
+            updateDisplay();
+        }
 
-    @Override
-    public void onExitAmbient() {
-        updateDisplay();
-        super.onExitAmbient();
+        @Override
+        public void onUpdateAmbient() {
+            super.onUpdateAmbient();
+            updateDisplay();
+        }
+
+        @Override
+        public void onExitAmbient() {
+            updateDisplay();
+            super.onExitAmbient();
+        }
     }
 
     private void updateDisplay() {
@@ -493,15 +471,14 @@ public class WearHomeActivity extends WearableActivity implements MessageClient.
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
+                                           @NonNull String permissions[], @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case BODY_SENSOR_PERMISSION_CODE: {
-                // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     setupSensors();
                 } else {
-                    // permission denied by user. disable
                 }
             }
         }
