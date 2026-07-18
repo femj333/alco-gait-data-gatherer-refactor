@@ -1,6 +1,7 @@
 package edu.wpi.alcogaitdatagatherer.models;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -9,10 +10,7 @@ import android.hardware.SensorManager;
 import android.net.Uri;
 import androidx.annotation.NonNull;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.wearable.ChannelClient;
@@ -34,18 +32,19 @@ import static android.hardware.Sensor.TYPE_ACCELEROMETER;
 import static android.hardware.Sensor.TYPE_GYROSCOPE;
 import static android.hardware.Sensor.TYPE_MAGNETIC_FIELD;
 
-/**
- * Created by Adonay on 9/11/2017.
- */
-
 public class SensorRecorder extends ChannelClient.ChannelCallback implements SensorEventListener {
+
+    public interface SensorRecorderListener {
+        void onWalkNumberUpdate(String info);
+        void onWalkLogUpdate(String log);
+        void onRecordingStatusChanged(boolean isRecording);
+        void onStartButtonTextUpdate(String text);
+    }
 
     private TestSubject testSubject;
     private Walk walk;
 
-    private TextView walkNumberDisplay;
-    private TextView walkLogDisplay;
-    private Button startButton;
+    private SensorRecorderListener listener;
     private DataGatheringActivity activity;
 
     private SensorManager mSensorManager;
@@ -66,24 +65,23 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     private String TAG = "SensorRecorder";
     private static final float ALPHA = 0.15f;
 
-    public SensorRecorder(DataGatheringActivity gatheringActivity, String rootFolderName, TestSubject testSubject, TextView walkNumberDisplay, TextView walkLogDisplay, Button startButton) {
+    public SensorRecorder(DataGatheringActivity gatheringActivity, String rootFolderName, TestSubject testSubject, SensorRecorderListener listener) {
         this.testSubject = testSubject;
+        this.activity = gatheringActivity;
         this.mSensorManager = (SensorManager) gatheringActivity.getSystemService(SENSOR_SERVICE);
         this.mAccelerometer = mSensorManager.getDefaultSensor(TYPE_ACCELEROMETER);
         this.mGyroscope = mSensorManager.getDefaultSensor(TYPE_GYROSCOPE);
         this.mMagnetometer = mSensorManager.getDefaultSensor(TYPE_MAGNETIC_FIELD);
         this.rootFolderName = rootFolderName;
+        this.listener = listener;
         isRecording = false;
 
-        this.walkNumberDisplay = walkNumberDisplay;
-        this.walkLogDisplay = walkLogDisplay;
-        this.startButton = startButton;
         logQueue = new LinkedList<Walk>();
         currentWalkNumber = 1;
         currentWalkType = WalkType.NORMAL;
         updateWalkNumberDisplay();
         testSubject.setCurrentWalkHolder(new WalkHolder(currentWalkNumber));
-        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        testSubject.setWalkTypeAmount(gatheringActivity);
         prepareReportFile();
     }
 
@@ -138,8 +136,8 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
     public void startRecording(Double BAC) {
         isRecording = true;
+        if (listener != null) listener.onRecordingStatusChanged(true);
         registerListeners();
-        walkLogDisplay.setVisibility(View.GONE);
         if (currentWalkType != null) {
             walk = new Walk(testSubject.getCurrentWalkHolder().getWalkNumber(), BAC, currentWalkType);
         }
@@ -147,8 +145,8 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
     public boolean stopRecording() {
         isRecording = false;
+        if (listener != null) listener.onRecordingStatusChanged(false);
         unregisterListeners();
-        walkLogDisplay.setVisibility(View.VISIBLE);
 
         testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().addWalk(walk));
 
@@ -158,7 +156,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             updateWalkNumberDisplay();
             return true;
         } else {
-            startButton.setText("SAVE WALK #" + String.valueOf(currentWalkNumber));
+            if (listener != null) listener.onStartButtonTextUpdate("SAVE WALK #" + String.valueOf(currentWalkNumber));
             return false;
         }
     }
@@ -174,31 +172,27 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
     }
 
     private void updateWalkNumberDisplay() {
-        walkNumberDisplay.setText("Walk Number " + (currentWalkNumber) + " : " + currentWalkType.toString());
+        if (listener != null) {
+            listener.onWalkNumberUpdate("Walk Number " + (currentWalkNumber) + " : " + currentWalkType.toString());
+        }
     }
 
-    public void restartCurrentWalkNumber(final EditText bacInput, DataGatheringActivity activity) {
+    public void restartCurrentWalkNumber(final Context context, final Runnable onRestartConfirmed) {
         DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
-                    bacInput.setText("");
-                    bacInput.setEnabled(true);
                     restartWalkHolder();
-                    if (activity.isWearablePreferenceEnabled()) {
-                        activity.notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.RESTART);
-                    }
+                    if (onRestartConfirmed != null) onRestartConfirmed.run();
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:
-                    //No button clicked
                     break;
             }
         };
-        AlertDialog.Builder builder = new AlertDialog.Builder(bacInput.getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Restart");
         builder.setMessage("Do you want to remove all walks for the current walk number? (Walk Number " + testSubject.getCurrentWalkHolder().getWalkNumber() + ") (" + testSubject.getCurrentWalkHolder().getSampleSize() + " samples recorded)").setPositiveButton("Yes", dialogClickListener)
                 .setNegativeButton("No", dialogClickListener).show();
-
     }
 
     private void restartWalkHolder() {
@@ -208,12 +202,11 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
         updateWalkNumberDisplay();
         clearWalkLog();
-        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
+        testSubject.setWalkTypeAmount(activity);
         walk = testSubject.getCurrentWalkHolder().get(currentWalkType);
-        walkLogDisplay.setVisibility(View.GONE);
     }
 
-    public void reDoWalk(final EditText bacInput, DataGatheringActivity activity) {
+    public void reDoWalk(final Context context, final Runnable onRedoConfirmed) {
         DialogInterface.OnClickListener dialogClickListener = (dialog, which) -> {
             switch (which) {
                 case DialogInterface.BUTTON_POSITIVE:
@@ -221,31 +214,28 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
                     if (!testSubject.getCurrentWalkHolder().hasWalk(WalkType.NORMAL)) {
                         testSubject.setWalkTypeAmount(activity);
                     }
-                    bacInput.setText(String.valueOf(walk.getBAC()));
                     currentWalkType = walk.getWalkType();
                     updateWalkNumberDisplay();
-                    //update walk log
                     logQueue.removeLast();
                     updateWalkLogDisplay(false);
                     if (currentWalkType != WalkType.NORMAL) {
                         walk = testSubject.getCurrentWalkHolder().get(testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType));
                     } else {
-                        bacInput.setEnabled(true);
                         walk = null;
                     }
-                    startButton.setText("START WALK");
-
-                    if (activity.isWearablePreferenceEnabled()) {
-                        activity.notifyWearableActivity(CommonCode.REDO_PREVIOUS_WALK_PATH, getCurrentWalkType().toNoSpaceString());
+                    if (listener != null) {
+                        listener.onStartButtonTextUpdate("START WALK");
                     }
-
+                    if (onRedoConfirmed != null) {
+                        onRedoConfirmed.run();
+                    }
                     break;
 
                 case DialogInterface.BUTTON_NEGATIVE:
                     break;
             }
         };
-        AlertDialog.Builder builder = new AlertDialog.Builder(bacInput.getContext());
+        AlertDialog.Builder builder = new AlertDialog.Builder(context);
         builder.setTitle("Re-Do Walk");
         builder.setMessage("Do you want re-do the previous walk? (Walk Number " + testSubject.getCurrentWalkHolder().getWalkNumber() +
                 " : " + testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType) + ")").setPositiveButton("Yes", dialogClickListener)
@@ -265,8 +255,7 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             logQueue.add(walk);
         }
 
-        String walkLog;
-        walkLog = "Last " + MAX_LOGS + " Walks:";
+        StringBuilder walkLog = new StringBuilder("Last " + MAX_LOGS + " Walks:");
         for (int i = logQueue.size() - 1; i >= 0; i--) {
             Walk aWalk = logQueue.get(i);
             String walkTypeString;
@@ -275,15 +264,15 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             } else {
                 walkTypeString = aWalk.getWalkType().toString();
             }
-            walkLog += "\nWalk Number " + aWalk.getWalkNumber() + " : BAC =" + aWalk.getBAC() + ", " + walkTypeString;
+            walkLog.append("\nWalk Number ").append(aWalk.getWalkNumber()).append(" : BAC =").append(aWalk.getBAC()).append(", ").append(walkTypeString);
         }
 
-        walkLogDisplay.setText(walkLog);
+        if (listener != null) listener.onWalkLogUpdate(walkLog.toString());
     }
 
     void clearWalkLog() {
         logQueue.clear();
-        walkLogDisplay.setText("");
+        if (listener != null) listener.onWalkLogUpdate("");
     }
 
     public boolean isRecording() {
@@ -312,8 +301,8 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         testSubject.addNewWalkHolder(new WalkHolder(currentWalkNumber));
         currentWalkType = testSubject.getCurrentWalkHolder().getNextWalkType();
         updateWalkNumberDisplay();
-        testSubject.setWalkTypeAmount(walkNumberDisplay.getContext());
-        startButton.setText("START WALK");
+        testSubject.setWalkTypeAmount(activity);
+        if (listener != null) listener.onStartButtonTextUpdate("START WALK");
     }
 
     public void prepareReportFile() {
@@ -411,5 +400,10 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
 
     public void setActivity(DataGatheringActivity activity) {
         this.activity = activity;
+    }
+
+    public double getPreviousBAC() {
+        if (walk != null) return walk.getBAC();
+        return 0.0;
     }
 }
