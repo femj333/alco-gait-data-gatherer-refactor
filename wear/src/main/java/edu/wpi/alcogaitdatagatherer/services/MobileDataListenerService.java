@@ -1,7 +1,7 @@
 package edu.wpi.alcogaitdatagatherer.services;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.wearable.MessageClient;
 import com.google.android.gms.wearable.MessageEvent;
@@ -34,6 +34,7 @@ public class MobileDataListenerService extends WearableListenerService implement
         super.onMessageReceived(messageEvent);
         if (messageEvent.getPath().equalsIgnoreCase(CommonCode.WEAR_HOME_ACTIVITY_PATH) || CommonCode.OPEN_APP.equalsIgnoreCase(new String(messageEvent.getData()))) {
             Intent intent = new Intent(this , WearHomeActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
         }
     }

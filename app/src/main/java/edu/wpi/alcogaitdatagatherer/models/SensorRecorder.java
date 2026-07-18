@@ -7,7 +7,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -161,33 +161,6 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
             startButton.setText("SAVE WALK #" + String.valueOf(currentWalkNumber));
             return false;
         }
-
-        /*AlertDialog.Builder builder = new AlertDialog.Builder(gatheringActivity);
-
-        dialogClickListener = new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                switch (which){
-                    case DialogInterface.BUTTON_POSITIVE:
-                        testSubject.addWalk(walk);
-
-                        updateWalkLogDisplay();
-                        bacInput.setText(String.valueOf(BAC + 1));
-
-                        currentWalkNumber++;
-                        updateWalkNumberDisplay();
-                        break;
-
-                    case DialogInterface.BUTTON_NEGATIVE:
-                        //No button clicked
-                        break;
-                }
-            }
-        };
-
-        builder.setTitle("Confirm Walk");
-        builder.setMessage("Do you want to keep data from this walk? (" + walk.getSampleSize() + " samples) If you choose 'No' you will repeat this walk. \n(Walk Number " + (currentWalkNumber) + ")").setPositiveButton("Yes", dialogClickListener)
-                .setNegativeButton("No", dialogClickListener).show();*/
     }
 
     public void prepareWalkStorage() {
@@ -312,57 +285,6 @@ public class SensorRecorder extends ChannelClient.ChannelCallback implements Sen
         logQueue.clear();
         walkLogDisplay.setText("");
     }
-
-    /*public void addWearableSensorData(String walkTypeString, String[] sensorData) {
-        if (isRecording) {
-            for(WalkType walkType: WalkType.values()){
-                if(walkTypeString.equals(walkType.toString())){
-                    walkHolderLite.addSensorData(walkTypeString, sensorData);
-                }
-            }
-        }
-    }*/
-
-    /*public void saveWearableSensorData(){
-        String [] sensorData = ;
-        int sensorType = removeSensorType(sensorData);
-
-        if (sensorType == TYPE_HEART_RATE) {
-            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-            walk.addHeartRateData(sensorData);
-        } else if (sensorType == TYPE_ACCELEROMETER) {
-            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-            walk.addWatchAccelerometerData(sensorData);
-        } else if (sensorType == TYPE_GYROSCOPE) {
-            sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-            walk.addWatchGyroscopeData(sensorData);
-        }
-
-        walkHolderLite = new WalkHolderLite();
-    }*/
-
-    /*public void addWearableSensorData(int sensorType, DataMap dataMap) {
-        if (isRecording) {
-            String[] sensorData;
-            String sensorName = dataMap.getString(CommonCode.SENSOR_NAME);
-            float[] values = dataMap.getFloatArray(CommonCode.VALUES);
-            int accuracy = dataMap.getInt(CommonCode.ACCURACY);
-            long timestamp = dataMap.getLong(CommonCode.TIMESTAMP);
-
-            if (values.length > 0) {
-                if (sensorType == TYPE_HEART_RATE) {
-                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-                    walk.addHeartRateData(sensorData);
-                } else if (sensorType == TYPE_ACCELEROMETER) {
-                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-                    walk.addWatchAccelerometerData(sensorData);
-                } else if (sensorType == TYPE_GYROSCOPE) {
-                    sensorData = generatePrintableSensorData(sensorName, values, accuracy, timestamp);
-                    walk.addWatchGyroscopeData(sensorData);
-                }
-            }
-        }
-    }*/
 
     public boolean isRecording() {
         return isRecording;

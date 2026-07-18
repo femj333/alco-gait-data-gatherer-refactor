@@ -1,6 +1,7 @@
 package edu.wpi.alcogaitdatagatherer.ui.adapters;
 
-import android.support.v7.widget.RecyclerView;
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,8 +29,9 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
         checkBoxStates = testSubject.getBooleanWalksList();
     }
 
+    @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view;
 
         if (viewType == R.layout.fragment_walkreport) {
@@ -44,7 +46,7 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         // If view is not the text box (EditText)
         if (!(position == checkBoxStates.size())) {
             holder.walkNumber = position + 1;
@@ -106,6 +108,8 @@ public class MyWalkReportRecyclerViewAdapter extends RecyclerView.Adapter<MyWalk
     }
 
     public void saveReport() {
-        mListener.submitReport(checkBoxStates, walkReportMessageInput.getText().toString());
+        if (mListener != null) {
+            mListener.submitReport(checkBoxStates, walkReportMessageInput.getText().toString());
+        }
     }
 }

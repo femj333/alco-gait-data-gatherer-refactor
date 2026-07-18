@@ -2,9 +2,9 @@ package edu.wpi.alcogaitdatagatherer.ui.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.AppCompatTextView;
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatTextView;
+import androidx.appcompat.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
@@ -13,17 +13,17 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.RadioButton;
 
+import java.util.List;
 import java.util.Locale;
 
+import edu.wpi.alcogaitdatagatherer.data.SurveyRepository;
 import edu.wpi.alcogaitdatagatherer.models.Gender;
 import edu.wpi.alcogaitdatagatherer.R;
 import edu.wpi.alcogaitdatagatherer.models.TestSubject;
-import edu.wpi.alcogaitdatagatherer.ui.adapters.SurveyListAdapter;
 
 public class SurveyFormActivity extends AppCompatActivity{
 
     private boolean isIDUnavailable;
-    private boolean allowSubmission = false;
     private EditText subjectIDInput;
     private RadioButton maleRadioButton;
     private RadioButton femaleRadioButton;
@@ -31,11 +31,14 @@ public class SurveyFormActivity extends AppCompatActivity{
     private EditText weightInput;
     private EditText heightFeetInput;
     private EditText heightInchesInput;
+    private SurveyRepository repository;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_survey_form);
+
+        repository = new SurveyRepository();
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.survey_toolbar);
         toolbar.setTitle("Add Test Subject");
@@ -52,21 +55,20 @@ public class SurveyFormActivity extends AppCompatActivity{
         heightFeetInput = findViewById(R.id.heightFeetInput);
         heightInchesInput = findViewById(R.id.heightInchesInput);
 
+        final List<String> existingIds = repository.getExistingIds();
+
         subjectIDInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void afterTextChanged(Editable editable) {
                 if (!editable.toString().trim().isEmpty()) {
-                    if (isIDUnavailable = SurveyListAdapter.getSavedIDs().contains(editable.toString().trim().replaceFirst("^0+(?!$)", ""))) {
+                    String inputId = editable.toString().trim().replaceFirst("^0+(?!$)", "");
+                    if (isIDUnavailable = existingIds.contains(inputId)) {
                         subjectIDInput.setError("This ID already exists. Please enter a valid ID.");
                     } else if (Integer.parseInt(editable.toString().trim()) < 101 || Integer.parseInt(editable.toString().trim()) > 996) {
                         subjectIDInput.setError("Subject ID has to be between 101 and 996");
@@ -79,14 +81,10 @@ public class SurveyFormActivity extends AppCompatActivity{
 
         ageInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void afterTextChanged(Editable editable) {
@@ -102,13 +100,10 @@ public class SurveyFormActivity extends AppCompatActivity{
 
         weightInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void afterTextChanged(Editable editable) {
@@ -128,14 +123,10 @@ public class SurveyFormActivity extends AppCompatActivity{
 
         heightFeetInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void afterTextChanged(Editable editable) {
@@ -151,14 +142,10 @@ public class SurveyFormActivity extends AppCompatActivity{
 
         heightInchesInput.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void afterTextChanged(Editable editable) {
@@ -242,7 +229,6 @@ public class SurveyFormActivity extends AppCompatActivity{
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 onBackPressed();
                 finish();
