@@ -44,10 +44,13 @@ import java.util.LinkedList
  */
 class SensorRecorder(
     private var activity: DataGatheringActivity,
-    private val rootFolderName: String,
-    private var testSubject: TestSubject,
+    rootFolderNameArg: String?,
+    var testSubject: TestSubject,
     private val listener: SensorRecorderListener?
 ) : ChannelClient.ChannelCallback(), SensorEventListener {
+
+    private val rootFolderName: String =
+        requireNotNull(rootFolderNameArg) { "rootFolderName must not be null - call prepareStoragePath() before creating SensorRecorder"}
 
     /**
      * Callback interface used to notify the UI layer of recording state
@@ -81,9 +84,11 @@ class SensorRecorder(
     // Path of the folder currently used to store the active walk's data
     private var walkFolderName: String? = null
 
-    private var isRecording: Boolean = false
-    private var currentWalkNumber: Int = 1
-    private var currentWalkType: WalkType? = WalkType.NORMAL
+    var isRecording: Boolean = false
+        private set
+    var currentWalkNumber: Int = 1
+    var currentWalkType: WalkType? = WalkType.NORMAL
+        private set
 
     private val TAG = "SensorRecorder"
 
@@ -94,7 +99,7 @@ class SensorRecorder(
 
     init {
         updateWalkNumberDisplay()
-        testSubject.setCurrentWalkHolder(WalkHolder(currentWalkNumber))
+        testSubject.currentWalkHolder = WalkHolder(currentWalkNumber)
         testSubject.setWalkTypeAmount(activity)
         prepareReportFile()
     }
@@ -187,7 +192,7 @@ class SensorRecorder(
         registerListeners()
         // create new walk with given BAC, current walk type
         currentWalkType?.let { walkType ->
-            walk = Walk(testSubject.getCurrentWalkHolder().walkNumber, BAC, walkType)
+            walk = Walk(testSubject.currentWalkHolder.walkNumber, BAC, walkType)
         }
     }
 
@@ -205,10 +210,10 @@ class SensorRecorder(
         unregisterListeners()
 
         // save walk to subject's current walk holder
-        testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().addWalk(walk))
+        testSubject.currentWalkHolder = testSubject.currentWalkHolder.addWalk(walk)
 
         // advance to next required walk type
-        currentWalkType = testSubject.getCurrentWalkHolder().nextWalkType
+        currentWalkType = testSubject.currentWalkHolder.nextWalkType
         updateWalkLogDisplay(true)
 
         return if (currentWalkType != null) { // there is another walk type left to record for this walk number
@@ -222,7 +227,7 @@ class SensorRecorder(
 
     /** Creates the on-disk folder ("walk_N") that this walk's data will be saved into. */
     fun prepareWalkStorage() {
-        walkFolderName = rootFolderName + File.separator + "walk_" + testSubject.getCurrentWalkHolder().walkNumber
+        walkFolderName = rootFolderName + File.separator + "walk_" + testSubject.currentWalkHolder.walkNumber
         val f = File(walkFolderName!!)
         f.mkdirs()
     }
@@ -257,8 +262,8 @@ class SensorRecorder(
             .setTitle("Restart")
             .setMessage(
                 "Do you want to remove all walks for the current walk number? (Walk Number " +
-                        testSubject.getCurrentWalkHolder().walkNumber + ") (" +
-                        testSubject.getCurrentWalkHolder().sampleSize + " samples recorded)"
+                        testSubject.currentWalkHolder.walkNumber + ") (" +
+                        testSubject.currentWalkHolder.sampleSize + " samples recorded)"
             )
             .setPositiveButton("Yes", dialogClickListener)
             .setNegativeButton("No", dialogClickListener)
@@ -269,12 +274,12 @@ class SensorRecorder(
     private fun restartWalkHolder() {
         isRecording = false
         testSubject.replaceWalkHolder(WalkHolder(currentWalkNumber))
-        currentWalkNumber = testSubject.getCurrentWalkHolder().walkNumber
-        currentWalkType = testSubject.getCurrentWalkHolder().nextWalkType
+        currentWalkNumber = testSubject.currentWalkHolder.walkNumber
+        currentWalkType = testSubject.currentWalkHolder.nextWalkType
         updateWalkNumberDisplay()
         clearWalkLog()
         testSubject.setWalkTypeAmount(activity)
-        walk = testSubject.getCurrentWalkHolder().get(currentWalkType)
+        walk = testSubject.currentWalkHolder.get(currentWalkType)
     }
 
     /**
@@ -288,9 +293,9 @@ class SensorRecorder(
                 DialogInterface.BUTTON_POSITIVE -> {
                     val walkTypeToRemove = walk?.walkType
                     if (walkTypeToRemove != null) {
-                        testSubject.setCurrentWalkHolder(testSubject.getCurrentWalkHolder().removeWalk(walkTypeToRemove))
+                        testSubject.currentWalkHolder = testSubject.currentWalkHolder.removeWalk(walkTypeToRemove)
                     }
-                    if (!testSubject.getCurrentWalkHolder().hasWalk(WalkType.NORMAL)) {
+                    if (!testSubject.currentWalkHolder.hasWalk(WalkType.NORMAL)) {
                         testSubject.setWalkTypeAmount(activity)
                     }
                     currentWalkType = walk?.walkType
@@ -299,8 +304,8 @@ class SensorRecorder(
                     updateWalkLogDisplay(false)
 
                     walk = if (currentWalkType != WalkType.NORMAL) {
-                        testSubject.getCurrentWalkHolder()
-                            .get(testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType))
+                        testSubject.currentWalkHolder
+                            .get(testSubject.currentWalkHolder.getPreviousWalkType(currentWalkType))
                     } else {
                         null
                     }
@@ -317,8 +322,8 @@ class SensorRecorder(
             .setTitle("Re-Do Walk")
             .setMessage(
                 "Do you want re-do the previous walk? (Walk Number " +
-                        testSubject.getCurrentWalkHolder().walkNumber + " : " +
-                        testSubject.getCurrentWalkHolder().getPreviousWalkType(currentWalkType) + ")"
+                        testSubject.currentWalkHolder.walkNumber + " : " +
+                        testSubject.currentWalkHolder.getPreviousWalkType(currentWalkType) + ")"
             )
             .setPositiveButton("Yes", dialogClickListener)
             .setNegativeButton("No", dialogClickListener)
@@ -387,7 +392,7 @@ class SensorRecorder(
     fun incrementWalkNumber() {
         currentWalkNumber++
         testSubject.addNewWalkHolder(WalkHolder(currentWalkNumber))
-        currentWalkType = testSubject.getCurrentWalkHolder().nextWalkType
+        currentWalkType = testSubject.currentWalkHolder.nextWalkType
         updateWalkNumberDisplay()
         testSubject.setWalkTypeAmount(activity)
         listener?.onStartButtonTextUpdate("START WALK")
@@ -435,7 +440,7 @@ class SensorRecorder(
 
             bufferWriter.append("\n\nReported Walk Numbers:\n")
             var hasReportedWalks = false
-            val booleanWalksList = testSubject.getBooleanWalksList()
+            val booleanWalksList = testSubject.booleanWalksList
             for (i in booleanWalksList.indices) {
                 if (booleanWalksList[i]) {
                     bufferWriter.append((i + 1).toString())
@@ -450,7 +455,7 @@ class SensorRecorder(
             }
 
             bufferWriter.append("\n\nReport Message:\n")
-            bufferWriter.append(testSubject.getReportMessage() + "\n")
+            bufferWriter.append(testSubject.reportMessage + "\n")
 
             bufferWriter.close()
 

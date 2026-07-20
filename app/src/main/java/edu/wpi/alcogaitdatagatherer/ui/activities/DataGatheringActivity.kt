@@ -117,7 +117,7 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
     private fun handleRedoLast() {
         if (sensorRecorder?.testSubject?.currentWalkHolder?.hasWalk(WalkType.NORMAL) == true) {
             sensorRecorder?.reDoWalk(this) {
-                viewModel.updateBacInput(sensorRecorder?.previousBAC?.toString() ?: "")
+                viewModel.updateBacInput(sensorRecorder?.getPreviousBAC()?.toString() ?: "")
                 if (isWearablePreferenceEnabled()) {
                     notifyWearableActivity(CommonCode.REDO_PREVIOUS_WALK_PATH, sensorRecorder?.currentWalkType?.toNoSpaceString() ?: "")
                 }

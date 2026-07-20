@@ -19,11 +19,11 @@ class Walk(
     val walkNumber: Int,
     // Blood alcohol content recorded for the subject during this walk.
     val BAC: Double,
-    // The kind of walk performed (e.g. NORMAL, STANDING_ON_ONE_FOOT).
+    // The kind of walk performed
     val walkType: WalkType
 ) : Serializable {
 
-    // Raw sensor readings collected during this walk, one String[] row per reading.
+    // Raw sensor readings collected during this walk, one String[] row per reading
     private val phoneAccelerometerDataList: LinkedList<Array<String>> = LinkedList()
     private val phoneGyroscopeDataList: LinkedList<Array<String>> = LinkedList()
     private val compassDataList: LinkedList<Array<String>> = LinkedList()
@@ -32,17 +32,17 @@ class Walk(
     // since watch data arrives as a file transfer rather than row-by-row).
     private var watchSampleSize: Int = 0
 
-    /** Appends one row of phone accelerometer data (e.g. [name, x, y, z, accuracy, timestamp]). */
+    /** Appends one row of phone accelerometer data (e.g. [name, x, y, z, accuracy, timestamp]) */
     fun addPhoneAccelerometerData(sensorData: Array<String>) {
         this.phoneAccelerometerDataList.add(sensorData)
     }
 
-    /** Appends one row of phone gyroscope data. */
+    /** Appends one row of phone gyroscope data */
     fun addPhoneGyroscopeData(sensorData: Array<String>) {
         this.phoneGyroscopeDataList.add(sensorData)
     }
 
-    /** Appends one row of derived compass/orientation data (azimuth, pitch, roll). */
+    /** Appends one row of derived compass/orientation data */
     fun addCompassData(compassData: Array<String>) {
         this.compassDataList.add(compassData)
     }
@@ -51,10 +51,9 @@ class Walk(
      * Total number of samples recorded for this walk across all phone
      * sensors plus whatever sample count was reported by the watch.
      */
-    fun getSampleSize(): Int {
-        return phoneAccelerometerDataList.size + phoneGyroscopeDataList.size +
+    val sampleSize: Int
+        get() = phoneAccelerometerDataList.size + phoneGyroscopeDataList.size +
                 compassDataList.size + watchSampleSize
-    }
 
     /** Records how many samples the paired watch captured for this walk. */
     fun addWatchSampleSize(sampleSize: Int) {
