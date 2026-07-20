@@ -233,7 +233,7 @@ class SensorRecorder(
     }
 
     /** Kicks off an async task that writes the current WalkHolder's data out to CSV. */
-    fun saveCurrentWalkNumberToCSV(bacInput: EditText) {
+    fun saveCurrentWalkNumberToCSV(bacInput: EditText?) {
         SaveWalkHolderToCSVTask(this, walkFolderName, bacInput).execute()
     }
 

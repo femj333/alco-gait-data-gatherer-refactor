@@ -385,7 +385,7 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
         AlertDialog.Builder(this)
             .setTitle("Return To Subject Information Form?")
             .setMessage("Are you sure you want to return to the form? Data for the latest walk number will be lost.")
-            .setPositiveButton("Yes") { _, _ -> finish() }
+            .setPositiveButton("Yes") { _, _ -> super.onBackPressed() }
             .setNegativeButton("No", null)
             .show()
     }
