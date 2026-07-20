@@ -367,8 +367,6 @@ class SensorRecorder(
         listener?.onWalkLogUpdate("")
     }
 
-    fun getTestSubject(): TestSubject = testSubject
-
     /**
      * Simple exponential low-pass filter used to smooth noisy raw sensor
      * readings: output = output + ALPHA * (input - output).
@@ -503,8 +501,12 @@ class SensorRecorder(
         this.activity = activity
     }
 
+    /**
+     * Exposes the owning activity as a [Context]
+     */
+    fun getContext(): Context = activity
+
     /** Returns the BAC of the most recently recorded walk, or 0.0 if none exists yet. */
-    fun getPreviousBAC(): Double {
-        return walk?.BAC ?: 0.0
-    }
+    val previousBAC: Double
+        get() =  walk?.BAC ?: 0.0
 }
