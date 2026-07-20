@@ -27,9 +27,8 @@ import edu.wpi.alcogaitdatagatherer.interfaces.BoxUploadProgressListener
  */
 class CustomSurveyView : RelativeLayout, BoxUploadProgressListener {
 
-    // Root of the inflated custom_survey_view layout
-    lateinit var rootView: View
-        private set
+    // The inflated row layout. Avoid `rootView`, which clashes with View.getRootView()
+    private lateinit var inflatedView: View
     lateinit var linearLayout: LinearLayout
         private set
     lateinit var fileIDTextView: TextView
@@ -51,11 +50,11 @@ class CustomSurveyView : RelativeLayout, BoxUploadProgressListener {
 
     /** Inflates the layout and binds each child view */
     private fun init(context: Context) {
-        rootView = inflate(context, R.layout.custom_survey_view, this)
-        linearLayout = rootView.findViewById(R.id.fileInfoLayout)
-        fileIDTextView = rootView.findViewById(R.id.fileIDTextView)
-        dateModifiedTextView = rootView.findViewById(R.id.dateModifiedTextView)
-        donutProgress = rootView.findViewById(R.id.fileUploadProgressBar)
+        inflatedView = inflate(context, R.layout.custom_survey_view, this)
+        linearLayout = inflatedView.findViewById(R.id.fileInfoLayout)
+        fileIDTextView = inflatedView.findViewById(R.id.fileIDTextView)
+        dateModifiedTextView = inflatedView.findViewById(R.id.dateModifiedTextView)
+        donutProgress = inflatedView.findViewById(R.id.fileUploadProgressBar)
     }
 
     /**
