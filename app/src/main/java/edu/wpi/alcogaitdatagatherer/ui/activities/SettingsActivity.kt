@@ -4,6 +4,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import edu.wpi.alcogaitdatagatherer.ui.settings.SettingsScreen
+import edu.wpi.alcogaitdatagatherer.ui.settings.SettingsViewModel
 
 class SettingsActivity : ComponentActivity() {
 

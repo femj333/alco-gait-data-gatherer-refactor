@@ -11,8 +11,6 @@
         android:name="android.hardware.sensor.compass"
         android:required="true" />
 
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.BODY_SENSORS"/>
@@ -52,8 +50,7 @@
         <activity
             android:name=".ui.activities.DataGatheringActivity"
             android:parentActivityName=".ui.activities.SurveyFormActivity"
-            android:screenOrientation="portrait"
-            android:launchMode="singleInstance">
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.activities.SurveyFormActivity" />

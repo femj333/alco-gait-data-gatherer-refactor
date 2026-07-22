@@ -1,6 +1,7 @@
 package edu.wpi.alcogaitdatagatherer.ui.home
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import edu.wpi.alcogaitdatagatherer.data.SurveyRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,7 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.File
 
-class HomeViewModel(private val repository: SurveyRepository = SurveyRepository()) : ViewModel() {
+class HomeViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = SurveyRepository(application)
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState

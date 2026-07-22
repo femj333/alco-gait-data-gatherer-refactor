@@ -1,14 +1,10 @@
 package edu.wpi.alcogaitdatagatherer.ui.activities
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
 import com.box.androidsdk.content.BoxApiFile
 import com.box.androidsdk.content.BoxApiFolder
@@ -24,18 +20,8 @@ class HomeActivity : ComponentActivity(), BoxAuthentication.AuthListener {
     private var mFolderApi: BoxApiFolder? = null
     private var mFileApi: BoxApiFile? = null
 
-    private val requestPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (!isGranted) {
-            Toast.makeText(this, "Permission denied. Cannot read survey files.", Toast.LENGTH_LONG).show()
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        checkPermissions()
 
         if (isBoxPreferenceEnabled()) {
             configureBoxClient()
@@ -57,16 +43,6 @@ class HomeActivity : ComponentActivity(), BoxAuthentication.AuthListener {
                 },
                 isBoxEnabled = isBoxPreferenceEnabled()
             )
-        }
-    }
-
-    private fun checkPermissions() {
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         }
     }
 

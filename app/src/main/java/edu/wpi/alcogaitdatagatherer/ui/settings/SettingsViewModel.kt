@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer.ui.activities
+package edu.wpi.alcogaitdatagatherer.ui.settings
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel

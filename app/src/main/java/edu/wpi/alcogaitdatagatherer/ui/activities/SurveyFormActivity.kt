@@ -5,7 +5,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import edu.wpi.alcogaitdatagatherer.models.TestSubject
+import edu.wpi.alcogaitdatagatherer.ui.surveyform.SurveyFormScreen
+import edu.wpi.alcogaitdatagatherer.ui.surveyform.SurveyFormViewModel
 
 class SurveyFormActivity : ComponentActivity() {
 
@@ -25,6 +26,8 @@ class SurveyFormActivity : ComponentActivity() {
                             putExtra("test_subject", testSubject)
                         }
                         startActivity(intent)
+                        // The completed form should not remain behind the recording session.
+                        finish()
                     }
                 }
             )

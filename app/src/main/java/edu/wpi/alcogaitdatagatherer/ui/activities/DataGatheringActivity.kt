@@ -1,10 +1,7 @@
 package edu.wpi.alcogaitdatagatherer.ui.activities
 
-import android.Manifest
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.*
@@ -12,8 +9,6 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.google.android.gms.tasks.Tasks
@@ -21,6 +16,9 @@ import com.google.android.gms.wearable.*
 import edu.wpi.alcogaitdatagatherer.R
 import edu.wpi.alcogaitdatagatherer.models.SensorRecorder
 import edu.wpi.alcogaitdatagatherer.models.TestSubject
+import edu.wpi.alcogaitdatagatherer.data.SurveyRepository
+import edu.wpi.alcogaitdatagatherer.ui.datagathering.DataGatheringScreen
+import edu.wpi.alcogaitdatagatherer.ui.datagathering.DataGatheringViewModel
 import edu.wpi.alcogaitdatagatherer.ui.fragments.WalkReportFragment
 import edu.wpi.alcogaitdatagatherercommon.CommonCode
 import edu.wpi.alcogaitdatagatherercommon.WalkType
@@ -29,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
-import java.util.concurrent.ExecutionException
 
 class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceivedListener,
     CapabilityClient.OnCapabilityChangedListener, WalkReportFragment.ReportFragmentListener {
@@ -75,7 +72,10 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
                 onBackClick = { onBackPressed() },
                 onRefreshWatchClick = {
                     if (isWearablePreferenceEnabled()) {
-                        notifyWearableActivity(CommonCode.WEAR_MESSAGE_PATH, CommonCode.REFRESH_CONNECTION)
+                        notifyWearableActivity(
+                            CommonCode.WEAR_MESSAGE_PATH,
+                            CommonCode.REFRESH_CONNECTION
+                        )
                         checkWearableReachability()
                     }
                 },
@@ -153,10 +153,14 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
     }
 
     private fun prepareStoragePath() {
-        val baseDir = Environment.getExternalStorageDirectory().absolutePath + "/AlcoGaitDataGatherer/"
-        val folderName = "ID_" + testSubject.subjectID.trim()
-        mFolderName = baseDir + folderName
-        File(mFolderName!!).mkdirs()
+        val folderName = "ID_${testSubject.subjectID.trim()}"
+        mFolderName = File(SurveyRepository.getSurveyDirectory(this), folderName)
+            .apply {
+                if (!exists() && !mkdirs()) {
+                    throw IllegalStateException("Unable to create survey directory")
+                }
+            }
+            .absolutePath
     }
 
     private fun setupTimer() {
@@ -226,12 +230,8 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
     }
 
     private fun requestSave() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), READ_WRITE_PERMISSION_CODE)
-        } else {
-            sensorRecorder?.saveCurrentWalkNumberToCSV(null) // Passing null as we handle input via ViewModel
-        }
+        // App-specific storage is already available; no legacy storage permission is needed.
+        sensorRecorder?.saveCurrentWalkNumberToCSV(null)
     }
 
     fun notifyWearableActivity(path: String, text: String) {
@@ -396,7 +396,6 @@ class DataGatheringActivity : AppCompatActivity(), MessageClient.OnMessageReceiv
     }
 
     companion object {
-        const val READ_WRITE_PERMISSION_CODE = 1000
         const val TB_FOR_WALK_REPORT = "walk_report"
     }
 }

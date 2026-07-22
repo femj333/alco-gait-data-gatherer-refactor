@@ -1,6 +1,7 @@
-package edu.wpi.alcogaitdatagatherer.ui.activities
+package edu.wpi.alcogaitdatagatherer.ui.surveyform
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,8 +25,8 @@ data class SurveyFormUiState(
     val isFormValid: Boolean = false
 )
 
-class SurveyFormViewModel : ViewModel() {
-    private val repository = SurveyRepository()
+class SurveyFormViewModel(application: Application) : AndroidViewModel(application) {
+    private val repository = SurveyRepository(application)
 
     private val _uiState = MutableStateFlow(SurveyFormUiState())
     val uiState: StateFlow<SurveyFormUiState> = _uiState.asStateFlow()

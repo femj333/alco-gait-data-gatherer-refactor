@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer.ui.activities
+package edu.wpi.alcogaitdatagatherer.ui.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons

@@ -1,22 +1,30 @@
 package edu.wpi.alcogaitdatagatherer.data
 
-import android.os.Environment
+import android.content.Context
 import java.io.File
 
-class SurveyRepository {
+/** Provides access to surveys stored in the app-specific external-files directory. */
+class SurveyRepository(private val context: Context) {
     companion object {
         const val FILE_SHOULD_START_WITH = "ID_"
+        private const val SURVEY_DIRECTORY_NAME = "AlcoGaitDataGatherer"
+
+        /**
+         * Returns the shared survey directory used by both the form and recorder.
+         * App-specific external storage needs no runtime storage permission on Android 11+.
+         */
+        fun getSurveyDirectory(context: Context): File {
+            val appStorage = context.getExternalFilesDir(null) ?: context.filesDir
+            return File(appStorage, SURVEY_DIRECTORY_NAME).apply {
+                if (!exists() && !mkdirs()) {
+                    throw IllegalStateException("Unable to create survey storage directory")
+                }
+            }
+        }
     }
 
     fun getSurveyFiles(): List<File> {
-        val baseDir = "${Environment.getExternalStorageDirectory().absolutePath}/AlcoGaitDataGatherer/"
-        val alcoGaitDirectory = File(baseDir)
-        
-        if (!alcoGaitDirectory.exists()) {
-            alcoGaitDirectory.mkdirs()
-        }
-
-        val allFilesFromDir = alcoGaitDirectory.listFiles() ?: return emptyList()
+        val allFilesFromDir = getSurveyDirectory(context).listFiles() ?: return emptyList()
 
         return allFilesFromDir
             .filter { file ->

@@ -1,4 +1,4 @@
-package edu.wpi.alcogaitdatagatherer.ui.activities
+package edu.wpi.alcogaitdatagatherer.ui.datagathering
 
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
